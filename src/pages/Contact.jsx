@@ -76,18 +76,6 @@ export default function Contact() {
     },
   });
 
-  const [mostrarSenha, setMostrarSenha] = useState(false);
-  const [changePassword, setChangePassword] = useState("password");
-
-  function handleClick() {
-    if (mostrarSenha) {
-      setMostrarSenha(false);
-      setChangePassword("password");
-    } else {
-      setMostrarSenha(true);
-      setChangePassword("text");
-    }
-  }
   return (
     <>
       <ThemeProvider theme={theme}>

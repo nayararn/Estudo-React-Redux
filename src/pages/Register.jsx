@@ -67,6 +67,7 @@ const useStyles = makeStyles(
   })
 );
 
+//Validações dos inputs
 const validationSchema = Yup.object({
   nome: Yup.string().required("Campo obrigatório!"),
   sobrenome: Yup.string().required("Campo obrigatório!"),
