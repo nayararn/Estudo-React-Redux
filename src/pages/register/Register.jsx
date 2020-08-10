@@ -1,116 +1,132 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Button,
   Typography,
   Box,
-  TextField,
   IconButton,
   InputAdornment,
   Divider,
 } from "@material-ui/core";
-import { makeStyles, createStyles, ThemeProvider } from "@material-ui/styles";
-import { Form, ErrorMessage, FormikContext, Field, Formik } from "formik";
+import { ThemeProvider } from "@material-ui/styles";
+import { TextField } from "formik-material-ui";
+import { Form, Field, useFormik, FormikContext } from "formik";
 import { Visibility, VisibilityOff } from "@material-ui/icons";
 import CheckCircleOutlineOutlinedIcon from "@material-ui/icons/CheckCircleOutlineOutlined";
 import { Link } from "react-router-dom";
-import { theme } from "../theme/theme";
-import InputMask from "react-input-mask";
-import * as Masks from "../utils/masks";
-import * as Yup from "yup";
+import { theme } from "../../theme/theme";
+// import InputMask from "react-input-mask";
+// import * as Masks from "../../utils/masks";
+import * as Schemas from "../../utils/schemas";
+import { registerStyles } from "../../assets/styles/styles";
+import api from "awesome-cep";
+import axios from "axios";
+import swal from "sweetalert";
 
-const useStyles = makeStyles(
-  createStyles({
-    boxPai: {
-      display: "flex",
-      flexDirection: "column",
-      height: "100vh",
-      width: "100%",
-      maxWidth: "1000px",
-      alignItems: "flex-start",
-      margin: "0 auto",
-      boxSizing: "border-box",
-      paddingTop: "130px",
-    },
-    input: {
-      textTransform: "none",
-    },
-    form: {
-      width: "100%",
-    },
-    boxInputs: {
-      marginBottom: "16px",
-      display: "flex",
-    },
-    DividerLarge: {
-      backgroundColor: "#E9AF00",
-      width: "75px",
-      height: "3px",
-    },
-    DividerSmall: {
-      backgroundColor: "#E9AF00",
-      width: "45px",
-      height: "3px",
-    },
-    dicaSenha: {
-      display: "flex",
-      flexDirection: "column",
-      border: "1px solid #dadad1",
-      borderRadius: "2px",
-      marginRight: "16px",
-      paddingLeft: "24px",
-    },
-    button: {
-      textTransform: "none",
-      fontWeight: "bold",
-      letterSpacing: "2px",
-    },
-  })
-);
-
-//Validações dos inputs
-const validationSchema = Yup.object({
-  nome: Yup.string().required("Campo obrigatório!"),
-  sobrenome: Yup.string().required("Campo obrigatório!"),
-  cpf: Yup.string().required("Campo obrigatório!"),
-  email: Yup.string().email().required("Campo obrigatório!"),
-  telefone: Yup.string().required("Campo obrigatório!"),
-  nomeEmpresa: Yup.string().required("Campo obrigatório!"),
-  cnpj: Yup.string().required("Campo obrigatório!"),
-  cep: Yup.string().required("Campo obrigatório!"),
-  endereco: Yup.string().required("Campo obrigatório!"),
-  numero: Yup.string().required("Campo obrigatório!"),
-  estado: Yup.string().required("Campo obrigatório!"),
-  cidade: Yup.string().required("Campo obrigatório!"),
-});
-
-export default function Register({ handleSubmit, initialValues }) {
-  const classes = useStyles();
-
-  const [cpfValues, setCpfValues] = useState("");
-  function cpfValue(event) {
-    setCpfValues(event.target.value);
-  }
-
+export default function Register() {
+  const classes = registerStyles();
   const [mostrarSenha, setMostrarSenha] = useState(false);
-  const [changePassword, setChangePassword] = useState("password");
+  const [mostrarCSenha, setMostrarCSenha] = useState(false);
+  const [changeType, setChangeType] = useState("password");
+  const [changeCType, setChangeCType] = useState("password");
 
-  function handleClick() {
+  const values = useFormik({
+    initialValues: {
+      nome: "",
+      sobrenome: "",
+      cpf: "",
+      email: "",
+      telefone: "",
+      nomeEmpresa: "",
+      cnpj: "",
+      cep: "",
+      endereco: "",
+      complemento: "",
+      numero: "",
+      estado: "",
+      cidade: "",
+      senha: "",
+      csenha: "",
+    },
+    validationSchema: Schemas.registerSchema,
+    onSubmit: (values) => {
+      console.log(values);
+    },
+  });
+
+  function passwordType() {
     if (mostrarSenha) {
       setMostrarSenha(false);
-      setChangePassword("password");
+      setChangeType("password");
     } else {
       setMostrarSenha(true);
-      setChangePassword("text");
+      setChangeType("text");
     }
   }
+
+  function passwordCType() {
+    if (mostrarSenha) {
+      mostrarCSenha(false);
+      setChangeCType("password");
+    } else {
+      setMostrarCSenha(true);
+      setChangeCType("text");
+    }
+  }
+
+  async function enviarDados() {
+    try {
+      await axios.post("http://localhost:5000/integrador", {
+        first_name: values.values.nome,
+        last_name: values.values.sobrenome,
+        cpf: values.values.cpf,
+        email: values.values.email,
+        telefone: values.values.telefone,
+        nome_empresa: values.values.nomeEmpresa,
+        cnpj: values.values.cnpj,
+        cep: values.values.cep,
+        endereco: values.values.endereco,
+        complemento: values.values.complemento,
+        numero: values.values.numero,
+        uf: values.values.estado,
+        cidade: values.values.cidade,
+        password: values.values.senha,
+        password_confirm: values.values.csenha,
+      });
+      swal({
+        text: "Cadastro realizado com sucesso!",
+        icon: "success",
+      });
+    } catch (error) {
+      swal({
+        text: "Erro ao efetuar cadastro.",
+        icon: "error",
+      });
+    }
+  }
+
+  async function buscaCep() {
+    try {
+      const resp = await api.findCEP(values.values.cep);
+      values.setFieldValue("cep", resp.cep);
+      values.setFieldValue("endereco", resp.address_name);
+      values.setFieldValue("estado", resp.state);
+      values.setFieldValue("cidade", resp.city);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  useEffect(() => {
+    if (values.values.cep.length === 8) {
+      buscaCep();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values.values.cep]);
+
   return (
     <>
       <ThemeProvider theme={theme}>
-        <Formik
-          initialValues={initialValues}
-          onSubmit={handleSubmit}
-          validationSchema={validationSchema}
-        >
+        <FormikContext.Provider value={values}>
           <Box className={classes.boxPai}>
             <Form className={classes.form}>
               <Box>
@@ -134,108 +150,98 @@ export default function Register({ handleSubmit, initialValues }) {
                 <Box>
                   <Box className={classes.boxInputs}>
                     <Box flex="50%" marginRight={1}>
-                      <Field name="nome">
-                        {({ field, form, meta }) => (
-                          <TextField
-                            fullWidth
-                            label="Nome"
-                            variant="filled"
-                            size="large"
-                            type="text"
-                            name="nome"
-                            id="nome"
-                            {...field}
-                          >
-                            {meta.touched && meta.error && (
-                              <p
-                                style={{
-                                  border: "1px solid red",
-                                  color: "red",
-                                  fontSize: "30px",
-                                }}
-                              >
-                                {meta.error}
-                              </p>
-                            )}
-                          </TextField>
-                        )}
-                      </Field>
+                      <Field
+                        component={TextField}
+                        name="nome"
+                        fullWidth
+                        label="Nome"
+                        variant="filled"
+                        size="medium"
+                        type="text"
+                        id="nome"
+                      />
                     </Box>
                     <Box flex="50%" marginLeft={1}>
-                      <TextField
+                      <Field
+                        component={TextField}
                         fullWidth
                         id="sobrenome"
                         label="Sobrenome"
                         variant="filled"
                         name="sobrenome"
-                        size="large"
+                        size="medium"
                         required
                       />
                     </Box>
                   </Box>
                   <Box className={classes.boxInputs}>
                     <Box flex="33%">
-                      <InputMask mask={Masks.maskCPF}>
-                        <TextField
-                          fullWidth
-                          id="cpf"
-                          label="CPF"
-                          variant="filled"
-                          name="cpf"
-                          size="large"
-                          required
-                        />
-                      </InputMask>
+                      {/* <InputMask mask={Masks.maskCPF}> */}
+                      <Field
+                        component={TextField}
+                        fullWidth
+                        id="cpf"
+                        label="CPF"
+                        variant="filled"
+                        name="cpf"
+                        size="medium"
+                        required
+                      />
+                      {/* </InputMask> */}
                     </Box>
                     <Box flex="33%" marginX={2}>
-                      <TextField
+                      <Field
+                        component={TextField}
                         fullWidth
                         id="email"
                         label="Email"
                         variant="filled"
                         name="email"
-                        size="large"
+                        size="medium"
                         required
                       />
                     </Box>
                     <Box flex="33%">
-                      <InputMask mask={Masks.maskTelefone}>
-                        <TextField
-                          fullWidth
-                          id="telefone"
-                          label="Telefone"
-                          variant="filled"
-                          name="telefone"
-                          size="large"
-                          required
-                        />
-                      </InputMask>
+                      {/* <InputMask mask={Masks.maskTelefone}> */}
+                      <Field
+                        component={TextField}
+                        fullWidth
+                        id="telefone"
+                        label="Telefone"
+                        variant="filled"
+                        name="telefone"
+                        size="medium"
+                        required
+                      />
+                      {/* </InputMask> */}
                     </Box>
                   </Box>
                   <Box className={classes.boxInputs}>
                     <Box flex="50%" marginRight={1}>
-                      <TextField
+                      <Field
+                        component={TextField}
                         fullWidth
                         id="nomeEmpresa"
                         label="Nome da empresa"
                         variant="filled"
                         name="nomeEmpresa"
-                        size="large"
+                        size="medium"
                         required
                       />
                     </Box>
                     <Box flex="50%" marginLeft={1}>
-                      <InputMask mask={Masks.maskCNPJ}>
-                        <TextField
-                          fullWidth
-                          id="cnpj"
-                          label="CNPJ"
-                          variant="filled"
-                          name="cnpj"
-                          size="large"
-                          required
-                        />
-                      </InputMask>
+                      {/* <InputMask mask={Masks.maskCNPJ}> */}
+                      <Field
+                        component={TextField}
+                        fullWidth
+                        id="cnpj"
+                        label="CNPJ"
+                        variant="filled"
+                        name="cnpj"
+                        size="medium"
+                        required
+                      />
+                      {/* </InputMask> */}
                     </Box>
                   </Box>
                 </Box>
@@ -258,71 +264,77 @@ export default function Register({ handleSubmit, initialValues }) {
                 <Box>
                   <Box className={classes.boxInputs}>
                     <Box flex="30%">
-                      <InputMask mask={Masks.maskCEP}>
-                        <TextField
-                          fullWidth
-                          id="cep"
-                          label="CEP"
-                          variant="filled"
-                          name="cep"
-                          size="large"
-                          required
-                        />
-                      </InputMask>
+                      {/* <InputMask mask={Masks.maskCEP}> */}
+                      <Field
+                        component={TextField}
+                        fullWidth
+                        id="cep"
+                        label="CEP"
+                        variant="filled"
+                        name="cep"
+                        size="medium"
+                        required
+                      />
+                      {/* </InputMask> */}
                     </Box>
                     <Box flex="55%" marginX={2}>
-                      <TextField
+                      <Field
+                        component={TextField}
                         fullWidth
                         id="endereco"
                         label="Endereço"
                         variant="filled"
                         name="endereco"
-                        size="large"
+                        size="medium"
                         required
                       />
                     </Box>
                     <Box flex="15%">
-                      <TextField
+                      <Field
+                        component={TextField}
                         fullWidth
                         id="numero"
                         label="Número"
                         variant="filled"
                         name="numero"
-                        size="large"
+                        size="medium"
                         required
                       />
                     </Box>
                   </Box>
                   <Box className={classes.boxInputs}>
                     <Box flex="30%">
-                      <TextField
+                      <Field
+                        component={TextField}
                         fullWidth
                         id="complemento"
                         label="Complemento"
                         variant="filled"
                         name="complemento"
-                        size="large"
+                        size="medium"
                       />
                     </Box>
                     <Box flex="35%" marginX={2}>
-                      <TextField
+                      <Field
+                        component={TextField}
                         fullWidth
                         id="estado"
                         label="Estado"
                         variant="filled"
                         name="estado"
-                        size="large"
+                        size="medium"
                         required
                       />
                     </Box>
                     <Box flex="35%">
-                      <TextField
+                      <Field
+                        component={TextField}
                         fullWidth
                         id="cidade"
                         label="Cidade"
                         variant="filled"
                         name="cidade"
-                        size="large"
+                        size="medium"
                         required
                       />
                     </Box>
@@ -404,21 +416,23 @@ export default function Register({ handleSubmit, initialValues }) {
                       flex="50%"
                     >
                       <Box mb={2}>
-                        <TextField
+                        <Field
+                          component={TextField}
                           fullWidth
                           id="senha"
                           label="Senha"
                           variant="filled"
                           name="senha"
-                          size="large"
-                          type={changePassword}
+                          size="medium"
+                          type={changeType}
                           required
-                          // value={passwordValues}
-                          // onChange={handleChangePassword}
                           InputProps={{
                             endAdornment: (
                               <InputAdornment>
-                                <IconButton type="button" onClick={handleClick}>
+                                <IconButton
+                                  type="button"
+                                  onClick={passwordType}
+                                >
                                   {mostrarSenha ? (
                                     <Visibility color="primary" />
                                   ) : (
@@ -431,22 +445,24 @@ export default function Register({ handleSubmit, initialValues }) {
                         />
                       </Box>
                       <Box>
-                        <TextField
+                        <Field
+                          component={TextField}
                           fullWidth
-                          id="confirmarSenha"
+                          id="csenha"
                           label="Confirmar senha"
                           variant="filled"
-                          name="confirmarSenha"
-                          size="large"
-                          type={changePassword}
+                          name="csenha"
+                          size="medium"
+                          type={changeCType}
                           required
-                          // value={passwordValues}
-                          // onChange={handleChangePassword}
                           InputProps={{
                             endAdornment: (
                               <InputAdornment>
-                                <IconButton type="button" onClick={handleClick}>
-                                  {mostrarSenha ? (
+                                <IconButton
+                                  type="button"
+                                  onClick={passwordCType}
+                                >
+                                  {mostrarCSenha ? (
                                     <Visibility color="primary" />
                                   ) : (
                                     <VisibilityOff color="primary" />
@@ -475,10 +491,11 @@ export default function Register({ handleSubmit, initialValues }) {
                             <Button
                               type="submit"
                               className={classes.button}
-                              size="large"
+                              size="medium"
                               variant="contained"
                               disableElevation
                               color="primary"
+                              onClick={enviarDados}
                             >
                               Cadastrar
                             </Button>
@@ -491,7 +508,7 @@ export default function Register({ handleSubmit, initialValues }) {
               </Box>
             </Form>
           </Box>
-        </Formik>
+        </FormikContext.Provider>
       </ThemeProvider>
     </>
   );

@@ -1,78 +1,52 @@
-import React, { useState } from "react";
-import {
-  Button,
-  Typography,
-  Box,
-  TextField,
-  IconButton,
-  InputAdornment,
-  Divider,
-} from "@material-ui/core";
-import { makeStyles, createStyles, ThemeProvider } from "@material-ui/styles";
-import { Form, useFormik, FormikContext } from "formik";
-import { Visibility, VisibilityOff, CodeSharp } from "@material-ui/icons";
+import React from "react";
+import { Button, Typography, Box, Divider } from "@material-ui/core";
+import { TextField } from "formik-material-ui";
+import { ThemeProvider } from "@material-ui/styles";
+import { Form, useFormik, FormikContext, Field } from "formik";
 import { Link } from "react-router-dom";
-import { theme } from "../theme/theme";
-
-const useStyles = makeStyles(
-  createStyles({
-    boxPai: {
-      display: "flex",
-      flexDirection: "column",
-      height: "75vh",
-      width: "100%",
-      maxWidth: "1000px",
-      alignItems: "flex-start",
-      margin: "0 auto",
-      paddingTop: "170px",
-      boxSizing: "border-box",
-    },
-    input: {
-      textTransform: "none",
-    },
-    form: {
-      width: "45%",
-    },
-    boxInputs: {
-      marginBottom: "16px",
-      display: "flex",
-      flexDirection: "column",
-    },
-    DividerLarge: {
-      backgroundColor: "#E9AF00",
-      width: "75px",
-      height: "3px",
-    },
-    button: {
-      textTransform: "none",
-      fontWeight: "bold",
-      letterSpacing: "2px",
-    },
-  })
-);
+import { theme } from "../../theme/theme";
+import { passwordStyles } from "../../assets/styles/styles";
+import * as Schemas from "../../utils/schemas";
+import axios from "axios";
+import swal from "sweetalert";
 
 export default function ForgotPassword() {
-  const [emailValues, setEmailValues] = React.useState("");
-
-  function handleChangeEmail(event) {
-    setEmailValues(event.target.value);
-  }
-
-  const classes = useStyles();
-  const methods = useFormik({
+  const classes = passwordStyles();
+  const values = useFormik({
     initialValues: {
       email: "",
-      password: "",
     },
-    onSubmit: () => {
-      console.log("ok");
+    validationSchema: Schemas.forgotPasswordSchema,
+    onSubmit: (values) => {
+      console.log(values);
     },
   });
+
+  async function alterarSenha() {
+    try {
+      const resp = await axios.post("http://localhost:5000/auth/recover", {
+        email: values.values.email,
+      });
+      if (resp.data.statusCode !== 200) {
+        swal({
+          text: "E-mail incorreto.",
+          icon: "error",
+        });
+      } else {
+        swal({
+          text: "Um e-mail foi enviado para você com a nova senha!",
+          icon: "success",
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   return (
     <>
       <ThemeProvider theme={theme}>
-        <FormikContext.Provider value={methods}>
+        <FormikContext.Provider value={values}>
           <Box className={classes.boxPai}>
             <Form className={classes.form}>
               <Box>
@@ -96,13 +70,14 @@ export default function ForgotPassword() {
                 <Box>
                   <Box className={classes.boxInputs}>
                     <Box>
-                      <TextField
+                      <Field
+                        component={TextField}
                         fullWidth
                         id="email"
                         label="E-mail"
                         variant="filled"
                         name="email"
-                        size="large"
+                        size="medium"
                         required
                       />
                     </Box>
@@ -123,17 +98,16 @@ export default function ForgotPassword() {
                   </Link>
                 </Box>
                 <Box>
-                  <Link to="/" style={{ textDecoration: "none" }}>
-                    <Button
-                      className={classes.button}
-                      size="large"
-                      variant="contained"
-                      disableElevation
-                      color="primary"
-                    >
-                      Enviar
-                    </Button>
-                  </Link>
+                  <Button
+                    className={classes.button}
+                    size="medium"
+                    variant="contained"
+                    disableElevation
+                    color="primary"
+                    onClick={alterarSenha}
+                  >
+                    Enviar
+                  </Button>
                 </Box>
               </Box>
             </Form>

@@ -1,85 +1,62 @@
-import React, { useState } from "react";
-import { Button, Typography, Box, TextField, Divider } from "@material-ui/core";
-import { makeStyles, createStyles, ThemeProvider } from "@material-ui/styles";
-import { Form, useFormik, FormikContext } from "formik";
-import { Link } from "react-router-dom";
-import { theme } from "../theme/theme";
+import React from "react";
+import { Button, Typography, Box, Divider } from "@material-ui/core";
+import { TextField } from "formik-material-ui";
+import { ThemeProvider } from "@material-ui/styles";
+import { Form, useFormik, FormikContext, Field } from "formik";
+import { theme } from "../../theme/theme";
 import InputMask from "react-input-mask";
-import * as Masks from "../utils/masks";
-
-const useStyles = makeStyles(
-  createStyles({
-    boxPai: {
-      display: "flex",
-      flexDirection: "column",
-      height: "100vh",
-      width: "100%",
-      maxWidth: "1000px",
-      alignItems: "flex-start",
-      margin: "0 auto",
-      boxSizing: "border-box",
-      paddingTop: "130px",
-    },
-    input: {
-      textTransform: "none",
-    },
-    form: {
-      width: "100%",
-    },
-    boxInputs: {
-      marginBottom: "16px",
-      display: "flex",
-    },
-    DividerLarge: {
-      backgroundColor: "#E9AF00",
-      width: "75px",
-      height: "3px",
-    },
-    DividerSmall: {
-      backgroundColor: "#E9AF00",
-      width: "45px",
-      height: "3px",
-    },
-    dicaSenha: {
-      display: "flex",
-      flexDirection: "column",
-      border: "1px solid #dadad1",
-      borderRadius: "2px",
-      marginRight: "16px",
-      paddingLeft: "24px",
-    },
-    button: {
-      textTransform: "none",
-      fontWeight: "bold",
-      letterSpacing: "2px",
-    },
-    header: {
-      width: "100%",
-      backgroundColor: "#ffffff",
-      height: "120px",
-      position: "fixed",
-      top: "0",
-      boxShadow: "rgba(0, 0, 0, 0.20) 1px 1px 10px",
-    },
-  })
-);
+import * as Masks from "../../utils/masks";
+import * as Schemas from "../../utils/schemas";
+import { contactStyles } from "../../assets/styles/styles";
+import swal from "sweetalert";
+import axios from "axios";
 
 export default function Contact() {
-  const classes = useStyles();
-  const methods = useFormik({
+  const classes = contactStyles();
+
+  const values = useFormik({
     initialValues: {
+      nome: "",
       email: "",
-      password: "",
+      telefone: "",
+      estado: "",
+      cidade: "",
+      assunto: "",
+      mensagem: "",
     },
-    onSubmit: () => {
-      console.log("ok");
+    validationSchema: Schemas.contactSchema,
+    onSubmit: (values) => {
+      console.log(values);
     },
   });
+
+  async function enviarContato() {
+    try {
+      await axios.post("http://localhost:5000/auth/contact", {
+        name: values.values.nome,
+        email: values.values.email,
+        telefone: values.values.telefone,
+        uf: values.values.estado,
+        cidade: values.values.cidade,
+        subject: values.values.assunto,
+        message: values.values.mensagem,
+      });
+      swal({
+        text: "Sua mensagem foi enviada com sucesso!",
+        icon: "success",
+      });
+    } catch (error) {
+      swal({
+        text: "Erro ao enviar mensagem, tente novamente.",
+        icon: "error",
+      });
+    }
+  }
 
   return (
     <>
       <ThemeProvider theme={theme}>
-        <FormikContext.Provider value={methods}>
+        <FormikContext.Provider value={values}>
           <Box className={classes.boxPai}>
             <Form className={classes.form}>
               <Box>
@@ -103,106 +80,112 @@ export default function Contact() {
                 <Box>
                   <Box className={classes.boxInputs}>
                     <Box flex="100%">
-                      <TextField
+                      <Field
+                        component={TextField}
                         fullWidth
                         id="nome"
                         label="Nome"
                         variant="filled"
                         name="nome"
-                        size="large"
+                        size="medium"
                         required
                       />
                     </Box>
                   </Box>
                   <Box className={classes.boxInputs}>
                     <Box flex="50%" marginRight={1}>
-                      <TextField
+                      <Field
+                        component={TextField}
                         fullWidth
                         id="email"
                         label="E-mail"
                         variant="filled"
                         name="email"
-                        size="large"
+                        size="medium"
                         required
                       />
                     </Box>
                     <Box flex="50%" marginLeft={1}>
-                      <InputMask mask={Masks.maskTelefone}>
-                        <TextField
-                          fullWidth
-                          id="telefone"
-                          label="Telefone"
-                          variant="filled"
-                          name="telefone"
-                          size="large"
-                          required
-                        />
-                      </InputMask>
+                      {/* <InputMask mask={Masks.maskTelefone}> */}
+                      <Field
+                        component={TextField}
+                        fullWidth
+                        id="telefone"
+                        label="Telefone"
+                        variant="filled"
+                        name="telefone"
+                        size="medium"
+                        required
+                      />
+                      {/* </InputMask> */}
                     </Box>
                   </Box>
                   <Box className={classes.boxInputs}>
                     <Box flex="50%" marginRight={1}>
-                      <TextField
+                      <Field
+                        component={TextField}
                         fullWidth
                         id="estado"
                         label="Estado"
                         variant="filled"
                         name="estado"
-                        size="large"
+                        size="medium"
                         required
                       />
                     </Box>
                     <Box flex="50%" marginLeft={1}>
-                      <TextField
+                      <Field
+                        component={TextField}
                         fullWidth
                         id="cidade"
                         label="Cidade"
                         variant="filled"
                         name="cidade"
-                        size="large"
+                        size="medium"
                         required
                       />
                     </Box>
                   </Box>
                   <Box className={classes.boxInputs}>
                     <Box flex="100%">
-                      <TextField
+                      <Field
+                        component={TextField}
                         fullWidth
                         id="assunto"
                         label="Assunto"
                         variant="filled"
                         name="assunto"
-                        size="large"
+                        size="medium"
                         required
                       />
                     </Box>
                   </Box>
                   <Box className={classes.boxInputs}>
                     <Box flex="100%">
-                      <TextField
+                      <Field
+                        component={TextField}
                         fullWidth
                         id="mensagem"
                         label="Mensagem"
                         variant="filled"
                         name="mensagem"
-                        size="large"
+                        size="medium"
                         required
                       />
                     </Box>
                   </Box>
                 </Box>
                 <Box display="flex" justifyContent="flex-end">
-                  <Link to="/" style={{ textDecoration: "none" }}>
-                    <Button
-                      className={classes.button}
-                      size="large"
-                      variant="contained"
-                      disableElevation
-                      color="primary"
-                    >
-                      Enviar
-                    </Button>
-                  </Link>
+                  <Button
+                    className={classes.button}
+                    size="medium"
+                    variant="contained"
+                    disableElevation
+                    color="primary"
+                    onClick={enviarContato}
+                  >
+                    Enviar
+                  </Button>
                 </Box>
               </Box>
             </Form>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Typography, Box } from "@material-ui/core";
 import { makeStyles, createStyles, ThemeProvider } from "@material-ui/styles";
 import { Link } from "react-router-dom";
@@ -29,6 +29,18 @@ const useStyles = makeStyles(
 
 export default function Header() {
   const classes = useStyles();
+  const [logado, setLogado] = useState(false);
+
+  useEffect(() => {
+    if (localStorage.getItem("token")) {
+      setLogado(true);
+    }
+  }, []);
+
+  function logout() {
+    localStorage.removeItem("token");
+    setLogado(false);
+  }
 
   return (
     <>
@@ -46,39 +58,80 @@ export default function Header() {
               <img width="170px" src={logo} alt="logo-sapir" />
             </Box>
             <Box display="flex" justifyContent="space-around" width="320px">
-              <Box>
-                <Link to="/contact" className={classes.link}>
-                  <Typography
-                    className={classes.items}
-                    variant="subtitle2"
-                    color="primary"
-                  >
-                    <Box fontWeight="bold">CONTATO</Box>
-                  </Typography>
-                </Link>
-              </Box>
-              <Box>
-                <Link to="/register" className={classes.link}>
-                  <Typography
-                    className={classes.items}
-                    variant="subtitle2"
-                    color="primary"
-                  >
-                    <Box fontWeight="bold">CADASTRE-SE</Box>
-                  </Typography>
-                </Link>
-              </Box>
-              <Box>
-                <Link to="/" className={classes.link}>
-                  <Typography
-                    className={classes.items}
-                    variant="subtitle2"
-                    color="primary"
-                  >
-                    <Box fontWeight="bold">LOGIN</Box>
-                  </Typography>
-                </Link>
-              </Box>
+              {logado === false ? (
+                <>
+                  <Box>
+                    <Link to="/contact" className={classes.link}>
+                      <Typography
+                        className={classes.items}
+                        variant="subtitle2"
+                        color="primary"
+                      >
+                        <Box fontWeight="bold">CONTATO</Box>
+                      </Typography>
+                    </Link>
+                  </Box>
+                  <Box>
+                    <Link to="/register" className={classes.link}>
+                      <Typography
+                        className={classes.items}
+                        variant="subtitle2"
+                        color="primary"
+                      >
+                        <Box fontWeight="bold">CADASTRE-SE</Box>
+                      </Typography>
+                    </Link>
+                  </Box>
+                  <Box>
+                    <Link to="/" className={classes.link}>
+                      <Typography
+                        className={classes.items}
+                        variant="subtitle2"
+                        color="primary"
+                      >
+                        <Box fontWeight="bold">LOGIN</Box>
+                      </Typography>
+                    </Link>
+                  </Box>
+                </>
+              ) : (
+                <>
+                  <Box>
+                    <Link to="/contact" className={classes.link}>
+                      <Typography
+                        className={classes.items}
+                        variant="subtitle2"
+                        color="primary"
+                      >
+                        <Box fontWeight="bold">CONTATO</Box>
+                      </Typography>
+                    </Link>
+                  </Box>
+                  <Box>
+                    <Link to="/profile" className={classes.link}>
+                      <Typography
+                        className={classes.items}
+                        variant="subtitle2"
+                        color="primary"
+                      >
+                        <Box fontWeight="bold">PERFIL</Box>
+                      </Typography>
+                    </Link>
+                  </Box>
+                  <Box>
+                    <Link to="/" className={classes.link}>
+                      <Typography
+                        className={classes.items}
+                        variant="subtitle2"
+                        color="primary"
+                        onClick={logout}
+                      >
+                        <Box>SAIR</Box>
+                      </Typography>
+                    </Link>
+                  </Box>
+                </>
+              )}
             </Box>
           </Box>
         </Box>

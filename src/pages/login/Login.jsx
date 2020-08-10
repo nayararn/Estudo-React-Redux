@@ -1,81 +1,37 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Button,
   Typography,
   Box,
-  TextField,
   IconButton,
   InputAdornment,
   Divider,
 } from "@material-ui/core";
-import { makeStyles, createStyles, ThemeProvider } from "@material-ui/styles";
-import { Form, useFormik, FormikContext } from "formik";
+import { TextField } from "formik-material-ui";
+import { ThemeProvider } from "@material-ui/styles";
+import { Form, useFormik, FormikContext, Field } from "formik";
 import { Visibility, VisibilityOff } from "@material-ui/icons";
 import { Link } from "react-router-dom";
-import { theme } from "../theme/theme";
-
-const useStyles = makeStyles(
-  createStyles({
-    boxPai: {
-      display: "flex",
-      flexDirection: "column",
-      height: "75vh",
-      width: "100%",
-      maxWidth: "1000px",
-      alignItems: "flex-start",
-      margin: "0 auto",
-      paddingTop: "170px",
-      boxSizing: "border-box",
-    },
-    input: {
-      textTransform: "none",
-    },
-    form: {
-      width: "45%",
-    },
-    boxInputs: {
-      marginBottom: "16px",
-      display: "flex",
-      flexDirection: "column",
-    },
-    DividerLarge: {
-      backgroundColor: "#E9AF00",
-      width: "75px",
-      height: "3px",
-    },
-    button: {
-      textTransform: "none",
-      fontWeight: "bold",
-      letterSpacing: "2px",
-    },
-  })
-);
+import { theme } from "../../theme/theme";
+import * as Schemas from "../../utils/schemas";
+import { loginStyles } from "../../assets/styles/styles";
+import swal from "sweetalert";
+import axios from "axios";
 
 export default function Login() {
-  const [emailValues, setEmailValues] = React.useState("");
-  const [passwordValues, setPasswordValues] = React.useState("");
-
-  function handleChangeEmail(event) {
-    setEmailValues(event.target.value);
-  }
-
-  function handleChangePassword(event) {
-    setPasswordValues(event.target.value);
-  }
-
-  const classes = useStyles();
-  const methods = useFormik({
-    initialValues: {
-      email: "",
-      password: "",
-    },
-    onSubmit: () => {
-      console.log("logado");
-    },
-  });
-
+  const classes = loginStyles();
   const [mostrarSenha, setMostrarSenha] = React.useState(false);
   const [changePassword, setChangePassword] = React.useState("password");
+  const values = useFormik({
+    initialValues: {
+      login: "",
+      senha: "",
+    },
+    validationSchema: Schemas.loginSchema,
+    onSubmit: (values) => {
+      console.log(values);
+    },
+  });
 
   function handleClick() {
     if (mostrarSenha) {
@@ -86,10 +42,31 @@ export default function Login() {
       setChangePassword("text");
     }
   }
+
+  async function login() {
+    try {
+      const resp = await axios.post("http://localhost:5000/auth", {
+        email: values.values.login,
+        password: values.values.senha,
+      });
+      localStorage.setItem("token", resp.headers["x-acess-token"]);
+      if (resp.data.statusCode !== 200) {
+        swal({
+          text: "E-mail ou senha incorretos.",
+          icon: "error",
+        });
+      } else {
+        window.location.href = "http://localhost:3001/profile";
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   return (
     <>
       <ThemeProvider theme={theme}>
-        <FormikContext.Provider value={methods}>
+        <FormikContext.Provider value={values}>
           <Box className={classes.boxPai}>
             <Form className={classes.form}>
               <Box>
@@ -113,28 +90,29 @@ export default function Login() {
                 <Box>
                   <Box className={classes.boxInputs}>
                     <Box mb={2}>
-                      <TextField
+                      <Field
+                        component={TextField}
                         fullWidth
                         id="login"
                         label="Login"
                         variant="filled"
                         name="login"
-                        size="large"
+                        size="medium"
+                        type="email"
                         required
                       />
                     </Box>
                     <Box>
-                      <TextField
+                      <Field
+                        component={TextField}
                         fullWidth
                         id="senha"
                         label="Senha"
                         variant="filled"
                         name="senha"
-                        size="large"
+                        size="medium"
                         type={changePassword}
                         required
-                        // value={passwordValues}
-                        // onChange={handleChangePassword}
                         InputProps={{
                           endAdornment: (
                             <InputAdornment>
@@ -179,17 +157,16 @@ export default function Login() {
                   </Box>
                 </Box>
                 <Box>
-                  <Link to="/" style={{ textDecoration: "none" }}>
-                    <Button
-                      className={classes.button}
-                      size="large"
-                      variant="contained"
-                      disableElevation
-                      color="primary"
-                    >
-                      Entrar
-                    </Button>
-                  </Link>
+                  <Button
+                    className={classes.button}
+                    size="medium"
+                    variant="contained"
+                    disableElevation
+                    color="primary"
+                    onClick={login}
+                  >
+                    Entrar
+                  </Button>
                 </Box>
               </Box>
             </Form>
